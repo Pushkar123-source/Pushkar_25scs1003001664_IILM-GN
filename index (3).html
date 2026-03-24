@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drug Classification System - AI/ML Project</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-pills"></i>
+                    <h1>Drug Classification System</h1>
+                </div>
+                <div class="subtitle">AI-Powered Drug Type Prediction using Naive Bayes & TF-IDF</div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Model Status Card -->
+            <div class="card status-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-brain"></i> Model Status</h2>
+                </div>
+                <div class="card-body">
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <div class="status-label">Model State</div>
+                            <div class="status-value" id="model-status">
+                                <span class="badge badge-warning">Not Loaded</span>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">Model Type</div>
+                            <div class="status-value">Multinomial Naive Bayes</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">Vectorizer</div>
+                            <div class="status-value">TF-IDF</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">Number of Classes</div>
+                            <div class="status-value" id="num-classes">-</div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="trainModel()">
+                            <i class="fas fa-cog"></i> Train Model
+                        </button>
+                        <button class="btn btn-secondary" onclick="loadModel()">
+                            <i class="fas fa-download"></i> Load Pre-trained Model
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prediction Card -->
+            <div class="card prediction-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-search"></i> Drug Type Prediction</h2>
+                </div>
+                <div class="card-body">
+                    <div class="input-section">
+                        <label for="drug-description">Enter Drug Description:</label>
+                        <textarea 
+                            id="drug-description" 
+                            rows="8" 
+                            placeholder="Enter drug description including:
+- Product introduction
+- Uses and benefits
+- How it works
+- Common side effects
+- Therapeutic class
+- Action mechanism
+
+Example: This medication is used to treat acid reflux and heartburn. It works by reducing the amount of acid produced in the stomach. Common side effects include headache and dizziness. It belongs to the H2 receptor antagonist class."
+                        ></textarea>
+                        
+                        <div class="button-group">
+                            <button class="btn btn-success btn-large" onclick="predictDrugType()">
+                                <i class="fas fa-magic"></i> Predict Drug Type
+                            </button>
+                            <button class="btn btn-outline" onclick="clearPrediction()">
+                                <i class="fas fa-eraser"></i> Clear
+                            </button>
+                            <button class="btn btn-outline" onclick="loadSampleData()">
+                                <i class="fas fa-flask"></i> Load Sample
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div id="results-section" class="results-section" style="display: none;">
+                        <h3>Prediction Results</h3>
+                        <div class="result-main">
+                            <div class="result-label">Predicted Drug Type:</div>
+                            <div class="result-value" id="predicted-type"></div>
+                            <div class="result-confidence">
+                                <span>Confidence: </span>
+                                <span id="confidence-value"></span>
+                            </div>
+                        </div>
+
+                        <div class="probability-bars">
+                            <h4>Top Predictions:</h4>
+                            <div id="probability-bars-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dataset Statistics -->
+            <div class="card stats-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-chart-bar"></i> Dataset Statistics</h2>
+                    <button class="btn btn-sm btn-outline" onclick="loadDatasetStats()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="stats-content">
+                        <p class="text-muted">Click refresh to load dataset statistics</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Information -->
+            <div class="card info-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-info-circle"></i> Model Information</h2>
+                </div>
+                <div class="card-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <i class="fas fa-layer-group"></i>
+                            <h4>Algorithm</h4>
+                            <p>Multinomial Naive Bayes classifier for multi-class text classification</p>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-calculator"></i>
+                            <h4>TF-IDF Vectorization</h4>
+                            <p>Term Frequency-Inverse Document Frequency for feature extraction</p>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-text-width"></i>
+                            <h4>Text Processing</h4>
+                            <p>Tokenization, stopword removal, and lemmatization using NLTK</p>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-project-diagram"></i>
+                            <h4>Features</h4>
+                            <p>N-grams (unigrams & bigrams) with max 5000 features</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Drug Classification AI/ML Project | Naive Bayes with TF-IDF | Built with Flask & Vanilla JS</p>
+        </footer>
+    </div>
+
+    <!-- Loading Spinner Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <p id="loading-text">Processing...</p>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

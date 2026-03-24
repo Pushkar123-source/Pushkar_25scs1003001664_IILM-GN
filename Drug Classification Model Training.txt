@@ -1,0 +1,257 @@
+Drug Classification Model Training with Naive Bayes and TF-IDF
+This script trains a Naive Bayes classifier to predict drug types based on text features
+"""
+
+import pandas as pd
+import numpy as np
+import pickle
+import re
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.preprocessing import LabelEncoder
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+
+# Download NLTK data
+print("Downloading NLTK data...")
+try:
+    nltk.download('punkt', quiet=True)
+    nltk.download('stopwords', quiet=True)
+    nltk.download('wordnet', quiet=True)
+    nltk.download('averaged_perceptron_tagger', quiet=True)
+except:
+    pass
+
+class DrugClassifier:
+    def __init__(self):
+        self.tfidf_vectorizer = None
+        self.model = None
+        self.label_encoder = None
+        self.stop_words = set(stopwords.words('english'))
+        self.lemmatizer = WordNetLemmatizer()
+        
+    def preprocess_text(self, text):
+        """
+        Advanced text preprocessing with tokenization and lemmatization
+        """
+        if pd.isna(text):
+            return ""
+        
+        # Convert to lowercase
+        text = str(text).lower()
+        
+        # Remove URLs
+        text = re.sub(r'http\S+|www\S+|https\S+', '', text)
+        
+        # Remove HTML tags
+        text = re.sub(r'<.*?>', '', text)
+        
+        # Remove special characters and digits
+        text = re.sub(r'[^a-zA-Z\s]', '', text)
+        
+        # Tokenization
+        tokens = word_tokenize(text)
+        
+        # Remove stopwords and lemmatize
+        tokens = [
+            self.lemmatizer.lemmatize(token) 
+            for token in tokens 
+            if token not in self.stop_words and len(token) > 2
+        ]
+        
+        return ' '.join(tokens)
+    
+    def create_combined_features(self, df):
+        """
+        Combine multiple text columns into rich feature text
+        """
+        # Select relevant text columns
+        text_columns = [
+            'Product_Introduction', 'Uses', 'Benefits', 
+            'How_It_Works', 'Common_Side_Effects', 'Therapeutic_Class',
+            'Action_Class', 'Chemical_Class'
+        ]
+        
+        combined_text = []
+        for idx, row in df.iterrows():
+            text_parts = []
+            for col in text_columns:
+                if col in df.columns and pd.notna(row[col]):
+                    text_parts.append(str(row[col]))
+            combined_text.append(' '.join(text_parts))
+        
+        return combined_text
+    
+    def train(self, csv_path='onemg.csv'):
+        """
+        Train the Naive Bayes classifier with TF-IDF features
+        """
+        print("Loading dataset...")
+        df = pd.read_csv(csv_path)
+        
+        # Remove rows with missing Drug_Type
+        df = df.dropna(subset=['Drug_Type'])
+        
+        # Filter to keep only top categories (with sufficient samples)
+        drug_type_counts = df['Drug_Type'].value_counts()
+        valid_types = drug_type_counts[drug_type_counts >= 10].index
+        df = df[df['Drug_Type'].isin(valid_types)]
+        
+        print(f"Total samples: {len(df)}")
+        print(f"Drug types: {df['Drug_Type'].unique()}")
+        
+        # Create combined text features
+        print("Creating features...")
+        X_text = self.create_combined_features(df)
+        
+        # Preprocess text
+        print("Preprocessing text...")
+        X_processed = [self.preprocess_text(text) for text in X_text]
+        
+        # Encode labels
+        self.label_encoder = LabelEncoder()
+        y = self.label_encoder.fit_transform(df['Drug_Type'])
+        
+        # Split data
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_processed, y, test_size=0.2, random_state=42, stratify=y
+        )
+        
+        # TF-IDF Vectorization
+        print("Applying TF-IDF vectorization...")
+        self.tfidf_vectorizer = TfidfVectorizer(
+            max_features=5000,
+            min_df=2,
+            max_df=0.8,
+            ngram_range=(1, 2),  # Use unigrams and bigrams
+            sublinear_tf=True
+        )
+        
+        X_train_tfidf = self.tfidf_vectorizer.fit_transform(X_train)
+        X_test_tfidf = self.tfidf_vectorizer.transform(X_test)
+        
+        # Train Naive Bayes classifier
+        print("Training Naive Bayes classifier...")
+        self.model = MultinomialNB(alpha=0.1)
+        self.model.fit(X_train_tfidf, y_train)
+        
+        # Evaluate
+        print("\n" + "="*50)
+        print("MODEL EVALUATION")
+        print("="*50)
+        
+        y_pred = self.model.predict(X_test_tfidf)
+        accuracy = accuracy_score(y_test, y_pred)
+        
+        print(f"\nAccuracy: {accuracy:.4f}")
+        print("\nClassification Report:")
+        print(classification_report(
+            y_test, y_pred, 
+            target_names=self.label_encoder.classes_
+        ))
+        
+        print("\nConfusion Matrix:")
+        print(confusion_matrix(y_test, y_pred))
+        
+        # Save model
+        self.save_model()
+        
+        return accuracy
+    
+    def predict(self, text):
+        """
+        Predict drug type from text description
+        """
+        if self.model is None or self.tfidf_vectorizer is None:
+            raise Exception("Model not trained. Please train the model first.")
+        
+        # Preprocess
+        processed_text = self.preprocess_text(text)
+        
+        # Vectorize
+        text_tfidf = self.tfidf_vectorizer.transform([processed_text])
+        
+        # Predict
+        prediction = self.model.predict(text_tfidf)[0]
+        probabilities = self.model.predict_proba(text_tfidf)[0]
+        
+        # Get class name
+        predicted_class = self.label_encoder.inverse_transform([prediction])[0]
+        
+        # Get top 3 predictions
+        top_3_indices = np.argsort(probabilities)[-3:][::-1]
+        top_3_predictions = [
+            {
+                'drug_type': self.label_encoder.inverse_transform([idx])[0],
+                'probability': float(probabilities[idx])
+            }
+            for idx in top_3_indices
+        ]
+        
+        return {
+            'predicted_drug_type': predicted_class,
+            'confidence': float(probabilities[prediction]),
+            'top_predictions': top_3_predictions
+        }
+    
+    def save_model(self, path='models/'):
+        """
+        Save trained model and vectorizer
+        """
+        import os
+        os.makedirs(path, exist_ok=True)
+        
+        with open(f'{path}naive_bayes_model.pkl', 'wb') as f:
+            pickle.dump(self.model, f)
+        
+        with open(f'{path}tfidf_vectorizer.pkl', 'wb') as f:
+            pickle.dump(self.tfidf_vectorizer, f)
+        
+        with open(f'{path}label_encoder.pkl', 'wb') as f:
+            pickle.dump(self.label_encoder, f)
+        
+        print(f"\nModel saved to {path}")
+    
+    def load_model(self, path='models/'):
+        """
+        Load trained model and vectorizer
+        """
+        with open(f'{path}naive_bayes_model.pkl', 'rb') as f:
+            self.model = pickle.load(f)
+        
+        with open(f'{path}tfidf_vectorizer.pkl', 'rb') as f:
+            self.tfidf_vectorizer = pickle.load(f)
+        
+        with open(f'{path}label_encoder.pkl', 'rb') as f:
+            self.label_encoder = pickle.load(f)
+        
+        print(f"Model loaded from {path}")
+
+
+if __name__ == "__main__":
+    # Initialize and train classifier
+    classifier = DrugClassifier()
+    accuracy = classifier.train('onemg.csv')
+    
+    # Test prediction
+    print("\n" + "="*50)
+    print("TESTING PREDICTION")
+    print("="*50)
+    
+    test_text = """
+    This medication is used to treat acid reflux and heartburn.
+    It works by reducing the amount of acid produced in the stomach.
+    Common side effects include headache and dizziness.
+    """
+    
+    result = classifier.predict(test_text)
+    print(f"\nTest Text: {test_text[:100]}...")
+    print(f"Predicted Drug Type: {result['predicted_drug_type']}")
+    print(f"Confidence: {result['confidence']:.4f}")
+    print("\nTop 3 Predictions:")
+    for pred in result['top_predictions']:
+        print(f"  - {pred['drug_type']}: {pred['probability']:.4f}")
