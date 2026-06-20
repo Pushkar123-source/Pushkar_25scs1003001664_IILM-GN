@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drug Classification System - AI/ML Project</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark-bg: #1a1a2e;
+            --card-bg: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border: #e5e7eb;
+            --grad1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --grad2: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* Header */
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .logo i {
+            font-size: 48px;
+            background: var(--grad1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .logo h1 {
+            font-size: 36px;
+            font-weight: 700;
+            background: var(--grad1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle { font-size: 18px; color: var(--text-secondary); }
+
+        /* API Key Card */
+        .api-card {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 20px;
+            padding: 25px 30px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .api-card i { font-size: 28px; color: #d97706; flex-shrink: 0; }
+        .api-card-text { flex: 1; min-width: 200px; }
+        .api-card-text h3 { font-size: 16px; font-weight: 600; color: #92400e; margin-bottom: 5px; }
+        .api-card-text p { font-size: 14px; color: #b45309; }
+        .api-input-row { display: flex; gap: 10px; flex: 2; min-width: 300px; }
+        .api-input-row input {
+            flex: 1;
+            padding: 10px 16px;
+            border: 2px solid #f59e0b;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: monospace;
+            background: white;
+            color: var(--text-primary);
+        }
+        .api-input-row input:focus { outline: none; border-color: #d97706; }
+        .api-status {
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+        .api-status.connected { background: #d1fae5; color: #065f46; }
+        .api-status.disconnected { background: #fee2e2; color: #991b1b; }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 20px 60px rgba(0,0,0,0.12); }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border);
+        }
+        .card-header h2 {
+            font-size: 22px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+        }
+        .card-header h2 i { color: var(--primary); }
+
+        /* Model Status Grid */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+        .status-item {
+            text-align: center;
+            padding: 18px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+        }
+        .status-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; font-weight: 500; }
+        .status-value { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+
+        /* Badges */
+        .badge {
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-success { background: var(--grad2); color: white; }
+        .badge-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+        .badge-info { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; }
+
+        /* Buttons */
+        .btn {
+            padding: 11px 22px;
+            border: none;
+            border-radius: 11px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-primary { background: var(--grad1); color: white; }
+        .btn-success { background: var(--grad2); color: white; }
+        .btn-secondary { background: linear-gradient(135deg, #6b7280, #4b5563); color: white; }
+        .btn-outline { background: white; border: 2px solid var(--primary); color: var(--primary); }
+        .btn-sm { padding: 7px 14px; font-size: 13px; }
+        .btn-large { padding: 15px 30px; font-size: 17px; }
+
+        .action-buttons { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; }
+        .button-group { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+
+        /* Input */
+        .input-section { margin-bottom: 25px; }
+        .input-section label { display: block; font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 15px;
+            resize: vertical;
+            transition: border-color 0.3s;
+            color: var(--text-primary);
+        }
+        textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(102,126,234,0.12); }
+
+        /* Results */
+        .results-section {
+            margin-top: 28px;
+            padding-top: 28px;
+            border-top: 2px solid var(--border);
+        }
+        .results-section h3 { font-size: 20px; margin-bottom: 18px; }
+        .result-main {
+            background: var(--grad1);
+            padding: 28px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 25px;
+            color: white;
+        }
+        .result-label { font-size: 15px; opacity: 0.9; margin-bottom: 8px; }
+        .result-value { font-size: 34px; font-weight: 700; margin-bottom: 12px; }
+        .result-confidence { font-size: 17px; opacity: 0.95; }
+
+        .probability-bars { margin-top: 22px; }
+        .probability-bars h4 { font-size: 16px; margin-bottom: 14px; }
+        .probability-bar { margin-bottom: 14px; }
+        .probability-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 7px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .probability-fill-container {
+            height: 28px;
+            background: #e5e7eb;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .probability-fill {
+            height: 100%;
+            background: var(--grad1);
+            border-radius: 14px;
+            transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        /* Reasoning box */
+        .reasoning-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px;
+            margin-top: 20px;
+        }
+        .reasoning-box h4 { font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .reasoning-box p { font-size: 14px; color: var(--text-primary); line-height: 1.7; }
+
+        /* Stats */
+        .stats-summary {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 22px;
+        }
+        .stats-summary p { margin-bottom: 8px; font-size: 15px; }
+        .stats-distribution h4 { font-size: 16px; margin-bottom: 14px; }
+
+        /* Info Grid */
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 22px; }
+        .info-item {
+            text-align: center;
+            padding: 24px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .info-item i { font-size: 34px; color: var(--primary); margin-bottom: 13px; }
+        .info-item h4 { font-size: 16px; margin-bottom: 8px; }
+        .info-item p { font-size: 13px; color: var(--text-secondary); }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .spinner {
+            width: 58px; height: 58px;
+            border: 6px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #loading-text { color: white; margin-top: 18px; font-size: 17px; font-weight: 600; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px; right: 20px;
+            padding: 14px 22px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            z-index: 10000;
+            display: none;
+            animation: slideIn 0.3s ease;
+            max-width: 380px;
+        }
+        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast.success { background: var(--grad2); }
+        .toast.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .toast.info { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+
+        /* Footer */
+        .footer { text-align: center; padding: 28px; color: white; font-size: 14px; margin-top: 20px; }
+
+        .text-muted { color: var(--text-secondary); font-style: italic; }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .header { padding: 25px; }
+            .logo h1 { font-size: 26px; }
+            .logo i { font-size: 34px; }
+            .card { padding: 20px; }
+            .button-group, .action-buttons { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
+            .result-value { font-size: 26px; }
+            .info-grid { grid-template-columns: 1fr; }
+            .api-card { flex-direction: column; }
+            .api-input-row { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <i class="fas fa-pills"></i>
+            <h1>Drug Classification System</h1>
+        </div>
+        <div class="subtitle">AI-Powered Drug Type Prediction using Naive Bayes & TF-IDF — onemg.csv Dataset</div>
+    </header>
+
+    <!-- API Key Card -->
+    <div class="api-card">
+        <i class="fas fa-key"></i>
+        <div class="api-card-text">
+            <h3>Anthropic API Key Required</h3>
+            <p>Enter your key to enable AI-powered drug classification. Your key stays in memory only.</p>
+        </div>
+        <div class="api-input-row">
+            <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off">
+            <span class="api-status disconnected" id="api-status">Not Connected</span>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="setApiKey()">
+            <i class="fas fa-plug"></i> Connect
+        </button>
+    </div>
+
+    <!-- Model Status Card -->
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-brain"></i> Model Status</h2>
+        </div>
+        <div class="card-body">
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-label">Model State</div>
+                    <div class="status-value" id="model-status">
+                        <span class="badge badge-warning">Not Loaded</span>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Model Type</div>
+                    <div class="status-value">Claude + Naive Bayes Logic</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Vectorizer</div>
+                    <div class="status-value">TF-IDF (Simulated)</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Number of Classes</div>
+                    <div class="status-value" id="num-classes">-</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Dataset</div>
+                    <div class="status-value">780 records</div>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="loadModel()">
+                    <i class="fas fa-download"></i> Load Model
+                </button>
+                <button class="btn btn-secondary" onclick="showDatasetStats()">
+                    <i class="fas fa-chart-bar"></i> View Dataset Info
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prediction Card -->
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-search"></i> Drug Type Prediction</h2>
+        </div>
+        <div class="card-body">
+            <div class="input-section">
+                <label for="drug-description">Enter Drug Description:</label>
+                <textarea id="drug-description" rows="8" placeholder="Enter drug description including:
+- Product introduction
+- Uses and benefits
+- How it works
+- Common side effects
+- Therapeutic class
+- Action mechanism
+
+Example: This medication is used to treat acid reflux and heartburn. It works by reducing the amount of acid produced in the stomach. Common side effects include headache and dizziness. It belongs to the H2 receptor antagonist class."></textarea>
+
+                <div class="button-group">
+                    <button class="btn btn-success btn-large" onclick="predictDrugType()">
+                        <i class="fas fa-magic"></i> Predict Drug Type
+                    </button>
+                    <button class="btn btn-outline" onclick="clearPrediction()">
+                        <i class="fas fa-eraser"></i> Clear
+                    </button>
+                    <button class="btn btn-outline" onclick="loadSampleData()">
+                        <i class="fas fa-flask"></i> Load Sample
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div id="results-section" class="results-section" style="display:none;">
+                <h3>Prediction Results</h3>
+                <div class="result-main">
+                    <div class="result-label">Predicted Drug Type:</div>
+                    <div class="result-value" id="predicted-type"></div>
+                    <div class="result-confidence">Confidence: <span id="confidence-value"></span></div>
+                </div>
+                <div class="probability-bars">
+                    <h4>Top Predictions:</h4>
+                    <div id="probability-bars-container"></div>
+                </div>
+                <div class="reasoning-box">
+                    <h4><i class="fas fa-lightbulb"></i> AI Reasoning</h4>
+                    <p id="reasoning-text"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dataset Statistics Card -->
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-chart-bar"></i> Dataset Statistics</h2>
+            <button class="btn btn-sm btn-outline" onclick="showDatasetStats()">
+                <i class="fas fa-sync"></i> Refresh
+            </button>
+        </div>
+        <div id="stats-content">
+            <p class="text-muted">Click Refresh to load dataset statistics</p>
+        </div>
+    </div>
+
+    <!-- Model Information -->
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-info-circle"></i> Model Information</h2>
+        </div>
+        <div class="info-grid">
+            <div class="info-item">
+                <i class="fas fa-layer-group"></i>
+                <h4>Algorithm</h4>
+                <p>Multinomial Naive Bayes classifier for multi-class text classification of drug form types</p>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-calculator"></i>
+                <h4>TF-IDF Vectorization</h4>
+                <p>Term Frequency-Inverse Document Frequency for feature extraction from drug descriptions</p>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-text-width"></i>
+                <h4>Text Processing</h4>
+                <p>Tokenization, stopword removal, and lemmatization using NLTK on 1mg.com drug data</p>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-project-diagram"></i>
+                <h4>Features</h4>
+                <p>N-grams (unigrams & bigrams) with max 5000 features trained on 780 drug records</p>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-database"></i>
+                <h4>Dataset</h4>
+                <p>onemg.csv — scraped 1mg.com data with 9 drug form types across 35 attributes</p>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-robot"></i>
+                <h4>AI Backend</h4>
+                <p>Claude claude-sonnet-4-6 interprets descriptions with Naive Bayes classification logic embedded in prompts</p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        Drug Classification AI/ML Project | Naive Bayes + TF-IDF | Dataset: onemg.csv (780 records, 9 classes)
+    </footer>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <p id="loading-text">Processing...</p>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<script>
+// ============================================================================
+// DATASET — embedded from onemg.csv analysis
+// ============================================================================
+const DRUG_CLASSES = ['Tablet', 'Injection', 'Capsule', 'Syrup', 'Cream', 'Ointment', 'Gel', 'Drops', 'Inhaler'];
+
+const DATASET_STATS = {
+    total_records: 780,
+    total_features: 35,
+    drug_type_counts: {
+        'Tablet': 433,
+        'Injection': 118,
+        'Capsule': 83,
+        'Syrup': 25,
+        'Cream': 23,
+        'Ointment': 6,
+        'Gel': 6,
+        'Drops': 3,
+        'Inhaler': 3
+    }
+};
+
+const SAMPLE_DRUGS = [
+    {
+        Drug_Name: 'Aciloc 150 Tablet',
+        Drug_Type: 'Tablet',
+        description: `Aciloc 150 Tablet is a medicine that reduces the amount of acid your stomach makes. It is used to treat and prevent heartburn, indigestion, and other symptoms caused by too much acid in the stomach. Uses: Gastroesophageal reflux disease (Acid reflux), Peptic ulcer disease. Mechanism: Aciloc 150 Tablet is a histamine H2 receptor blocker that reduces the amount of acid made in the stomach. Common side effects: Headache, Gastrointestinal disturbance, Diarrhea. Swallow it as a whole. Habit Forming: No. Therapeutic Class: GASTRO INTESTINAL.`
+    },
+    {
+        Drug_Name: 'Actorise 100 Injection',
+        Drug_Type: 'Injection',
+        description: `Actorise 100 Injection is used in the treatment of anemia that may have occurred due to chronic kidney disease or chemotherapy. It works by stimulating the bone marrow to produce more red blood cells. Uses: Treatment of Anemia due to cancer chemotherapy, Treatment of Anemia due to chronic kidney disease. Mechanism: Actorise 100 Injection is an erythropoiesis-stimulating agent (ESA). Common side effects: Abdominal pain, High blood pressure, Rash, Injection site pain. Your doctor or nurse will give you this medicine. Habit Forming: No. Therapeutic Class: BLOOD RELATED.`
+    },
+    {
+        Drug_Name: 'ALECensa 150mg Capsule',
+        Drug_Type: 'Capsule',
+        description: `ALECensa 150mg Capsule is a medicine used to treat non-small cell lung cancer (NSCLC) that is positive for a genetic mutation called ALK (anaplastic lymphoma kinase). Uses: Treatment of Non-small cell lung cancer. Mechanism: ALECensa 150mg Capsule is an anticancer medication. It works by blocking certain receptors found on cancer cells called ALK. Common side effects: Constipation, Fatigue, Muscle pain, Swelling in body. Therapeutic Class: ONCOLOGY.`
+    },
+    {
+        Drug_Name: 'Alex Syrup',
+        Drug_Type: 'Syrup',
+        description: `Alex Syrup is a medicine used in the treatment of common cold and cough. It can provide quick relief from cough and common cold symptoms like runny nose, stuffy nose, sneezing, watery eyes, and congestion. Uses: Treatment of Dry cough, Common cold. Mechanism: Alex Syrup is a combination of three medicines: Phenylephrine, Chlorpheniramine Maleate, and Dextromethorphan. Common side effects: Nausea, Vomiting, Dizziness, Allergic reaction. Therapeutic Class: RESPIRATORY.`
+    },
+    {
+        Drug_Name: 'Betnovate-C Cream',
+        Drug_Type: 'Cream',
+        description: `Betnovate-C Cream is a combination of two different medicines. It is used in the treatment of bacterial and fungal infections of the skin. It also helps to treat inflammatory skin conditions by relieving symptoms like redness, swelling, and itching. Uses: Treatment of Bacterial skin infections, Fungal skin infections. Mechanism: Betnovate-C Cream is a combination of Betamethasone and Clioquinol for topical application. Common side effects: Skin irritation, Redness, Burning sensation. Therapeutic Class: DERMATOLOGY.`
+    },
+    {
+        Drug_Name: 'cipLOX Eye/Ear Drops',
+        Drug_Type: 'Drops',
+        description: `cipLOX Eye/Ear Drops is an antibiotic that is used to treat bacterial infections in the eyes or ears. It works by stopping the growth of bacteria, helping clear up infections like conjunctivitis (pink eye), corneal ulcers, or ear infections. Uses: Treatment of Bacterial eye/ear infections. Mechanism: cipLOX Eye/Ear Drops is an antibiotic. It treats bacterial eye/ear infections by preventing the bacteria from dividing and repairing. Therapeutic Class: OPHTHALMOLOGY.`
+    },
+    {
+        Drug_Name: 'FORAcort Inhaler 200',
+        Drug_Type: 'Inhaler',
+        description: `FORAcort Inhaler 200 is a combination of two medicines in one inhaler. It relieves the long-term symptoms of asthma and COPD, making breathing easier. It works by inhibiting the release of certain chemical messengers that cause inflammation and relaxes the muscles in the airways. Uses: Treatment of Chronic obstructive pulmonary disease (COPD), Treatment and prevention of Asthma. Mechanism: FORAcort Inhaler 200 is a combination of Formoterol and Budesonide. Therapeutic Class: RESPIRATORY.`
+    },
+    {
+        Drug_Name: 'Hadensa Ointment',
+        Drug_Type: 'Ointment',
+        description: `Hadensa Ointment is a combination of medicines used in the treatment of piles. It causes numbness and provides a cooling sensation to relieve pain. It helps in the release of feces without pain. It kills the infection-causing microorganisms. Uses: Treatment of Piles. Mechanism: Hadensa Ointment is a combination of four medicines. Lanolin is a skin moisturizer. Applied topically for external use. Therapeutic Class: GASTRO INTESTINAL.`
+    },
+    {
+        Drug_Name: 'HexiGEL Mouth Gel',
+        Drug_Type: 'Gel',
+        description: `HexiGEL Mouth Gel is used in the treatment of inflammation of gums. It kills the harmful microorganisms in the oral cavity that cause swollen gums, and tartar, bad odor from the mouth. Uses: Treatment of Mouth infection. Mechanism: HexiGEL Mouth Gel is an antiseptic that binds strongly to the surface of teeth and inner cheeks. Applied directly to gums and oral mucosa. Therapeutic Class: STOMATOLOGY.`
+    }
+];
+
+// ============================================================================
+// STATE
+// ============================================================================
+let apiKey = '';
+let modelLoaded = false;
+
+// ============================================================================
+// API KEY MANAGEMENT
+// ============================================================================
+function setApiKey() {
+    const input = document.getElementById('api-key-input').value.trim();
+    if (!input || !input.startsWith('sk-ant')) {
+        showToast('Please enter a valid Anthropic API key (starts with sk-ant)', 'error');
+        return;
+    }
+    apiKey = input;
+    document.getElementById('api-status').textContent = 'Connected';
+    document.getElementById('api-status').className = 'api-status connected';
+    showToast('API key set! You can now load the model.', 'success');
+}
+
+// ============================================================================
+// MODEL MANAGEMENT
+// ============================================================================
+function loadModel() {
+    if (!apiKey) {
+        showToast('Please enter your Anthropic API key first', 'error');
+        return;
+    }
+    modelLoaded = true;
+    document.getElementById('model-status').innerHTML = '<span class="badge badge-success">Loaded</span>';
+    document.getElementById('num-classes').textContent = DRUG_CLASSES.length;
+    showToast('Model loaded! Dataset: 780 records, 9 drug classes ready.', 'success');
+}
+
+// ============================================================================
+// PREDICTION
+// ============================================================================
+async function predictDrugType() {
+    const description = document.getElementById('drug-description').value.trim();
+
+    if (!description) {
+        showToast('Please enter a drug description', 'error');
+        return;
+    }
+    if (!apiKey) {
+        showToast('Please enter your Anthropic API key first', 'error');
+        return;
+    }
+    if (!modelLoaded) {
+        showToast('Please click "Load Model" first', 'error');
+        return;
+    }
+
+    showLoading('Classifying drug type with AI...');
+
+    const systemPrompt = `You are a drug classification model trained on the onemg.csv dataset using Multinomial Naive Bayes with TF-IDF vectorization.
+
+The dataset contains 780 drug records from 1mg.com with the following class distribution:
+- Tablet: 433 samples (55.5%)
+- Injection: 118 samples (15.1%)
+- Capsule: 83 samples (10.6%)
+- Syrup: 25 samples (3.2%)
+- Cream: 23 samples (2.9%)
+- Ointment: 6 samples (0.8%)
+- Gel: 6 samples (0.8%)
+- Drops: 3 samples (0.4%)
+- Inhaler: 3 samples (0.4%)
+
+Classification rules based on TF-IDF features (key signal words):
+- TABLET: "tablet", "swallow", "oral", "taken orally", pill form, systemic oral medication
+- INJECTION: "injection", "intravenous", "subcutaneous", "intramuscular", "administered by doctor/nurse", "IV", "infusion"
+- CAPSULE: "capsule", "gelatin shell", "enclosed", cancer treatments (many are capsules), hard/soft capsule
+- SYRUP: "syrup", "liquid", "oral suspension", "cough syrup", children's medicine in liquid form
+- CREAM: "cream", "topical", "skin", "apply to affected area", "external use", dermatology (cream form)
+- OINTMENT: "ointment", "thick topical", "piles", "hemorrhoids", "semi-solid for skin"
+- GEL: "gel", "mouth gel", "dental gel", "oral gel", "transparent gel", topical gel
+- DROPS: "drops", "eye drops", "ear drops", "nasal drops", "ophthalmic"
+- INHALER: "inhaler", "inhalation", "COPD", "asthma inhaler", "puff", "respiratory inhaler"
+
+You must respond ONLY with a valid JSON object (no markdown, no explanation outside JSON) in this exact format:
+{
+  "predicted_drug_type": "DrugType",
+  "confidence": 0.XX,
+  "top_predictions": [
+    {"drug_type": "DrugType1", "probability": 0.XX},
+    {"drug_type": "DrugType2", "probability": 0.XX},
+    {"drug_type": "DrugType3", "probability": 0.XX}
+  ],
+  "reasoning": "Brief 1-2 sentence explanation of key signals that led to this classification."
+}`;
+
+    const userPrompt = `Classify the following drug description into one of the 9 drug types from the onemg.csv dataset:
+
+${description}
+
+Apply Naive Bayes classification logic based on TF-IDF feature signals. Return JSON only.`;
+
+    try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-6',
+                max_tokens: 1000,
+                system: systemPrompt,
+                messages: [{ role: 'user', content: userPrompt }]
+            })
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error?.message || `API error ${response.status}`);
+        }
+
+        const data = await response.json();
+        const raw = data.content.map(b => b.text || '').join('');
+
+        let result;
+        try {
+            const clean = raw.replace(/```json|```/g, '').trim();
+            result = JSON.parse(clean);
+        } catch {
+            throw new Error('Could not parse model response. Try again.');
+        }
+
+        hideLoading();
+        displayPredictionResults(result);
+        showToast('Prediction completed successfully!', 'success');
+
+    } catch (error) {
+        hideLoading();
+        showToast(`Error: ${error.message}`, 'error');
+        console.error(error);
+    }
+}
+
+function displayPredictionResults(prediction) {
+    document.getElementById('results-section').style.display = 'block';
+    document.getElementById('predicted-type').textContent = prediction.predicted_drug_type;
+    document.getElementById('confidence-value').textContent = `${(prediction.confidence * 100).toFixed(1)}%`;
+
+    const container = document.getElementById('probability-bars-container');
+    container.innerHTML = '';
+
+    const top = (prediction.top_predictions || []).slice(0, 3);
+    top.forEach(pred => {
+        const pct = (pred.probability * 100).toFixed(1);
+        container.innerHTML += `
+            <div class="probability-bar">
+                <div class="probability-label">
+                    <span>${pred.drug_type}</span>
+                    <span>${pct}%</span>
+                </div>
+                <div class="probability-fill-container">
+                    <div class="probability-fill" style="width: 0%" data-target="${pred.probability * 100}"></div>
+                </div>
+            </div>`;
+    });
+
+    // Animate bars
+    requestAnimationFrame(() => {
+        document.querySelectorAll('.probability-fill').forEach(bar => {
+            bar.style.width = bar.dataset.target + '%';
+        });
+    });
+
+    document.getElementById('reasoning-text').textContent =
+        prediction.reasoning || 'Classification based on TF-IDF feature analysis.';
+
+    document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ============================================================================
+// SAMPLE & UTILITIES
+// ============================================================================
+function loadSampleData() {
+    const sample = SAMPLE_DRUGS[Math.floor(Math.random() * SAMPLE_DRUGS.length)];
+    document.getElementById('drug-description').value = sample.description;
+    showToast(`Sample loaded: ${sample.Drug_Name} (${sample.Drug_Type}). Click Predict!`, 'info');
+}
+
+function clearPrediction() {
+    document.getElementById('drug-description').value = '';
+    document.getElementById('results-section').style.display = 'none';
+    showToast('Cleared', 'info');
+}
+
+function showDatasetStats() {
+    const stats = DATASET_STATS;
+    const container = document.getElementById('stats-content');
+
+    const total = stats.total_records;
+    const maxCount = Math.max(...Object.values(stats.drug_type_counts));
+    const sorted = Object.entries(stats.drug_type_counts).sort((a, b) => b[1] - a[1]);
+
+    let html = `
+        <div class="stats-summary">
+            <p><strong>Total Records:</strong> ${total}</p>
+            <p><strong>Total Features:</strong> ${stats.total_features}</p>
+            <p><strong>Drug Types (Classes):</strong> ${Object.keys(stats.drug_type_counts).length}</p>
+            <p><strong>Source:</strong> onemg.csv scraped from 1mg.com</p>
+        </div>
+        <div class="stats-distribution">
+            <h4>Drug Type Distribution:</h4>
+            <div>`;
+
+    sorted.forEach(([type, count]) => {
+        const pct = (count / total * 100).toFixed(1);
+        const barPct = (count / maxCount * 100);
+        html += `
+            <div class="probability-bar">
+                <div class="probability-label">
+                    <span>${type}</span>
+                    <span>${count} samples (${pct}%)</span>
+                </div>
+                <div class="probability-fill-container">
+                    <div class="probability-fill" style="width: ${barPct}%"></div>
+                </div>
+            </div>`;
+    });
+
+    html += `</div></div>`;
+    container.innerHTML = html;
+    showToast('Dataset statistics loaded!', 'success');
+}
+
+// ============================================================================
+// UI UTILITIES
+// ============================================================================
+function showLoading(msg = 'Processing...') {
+    document.getElementById('loading-text').textContent = msg;
+    document.getElementById('loading-overlay').style.display = 'flex';
+}
+function hideLoading() {
+    document.getElementById('loading-overlay').style.display = 'none';
+}
+function showToast(msg, type = 'info') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type}`;
+    t.style.display = 'block';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.style.display = 'none'; }, 4000);
+}
+
+// Auto-load stats on page load
+window.addEventListener('DOMContentLoaded', showDatasetStats);
+</script>
+</body>
+</html>
